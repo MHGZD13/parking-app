@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>سامانه هوشمند مدیریت پارکینگ</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e3a8a;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --warning: #d97706;
+            --purple: #7c3aed;
+            --bg: #f1f5f9;
+            --card: #ffffff;
+            --text: #0f172a;
+            --muted: #64748b;
+        }
+        * {
+            box-sizing: border-box;
+            font-family: 'Vazirmatn', sans-serif;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            padding-bottom: 95px;
+        }
+
+        /* هدر بالای برنامه */
+        .header {
+            background: linear-gradient(135deg, #1e3a8a, #2563eb);
+            color: white;
+            padding: 14px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+        .header h1 { font-size: 1rem; font-weight: 800; }
+        .badge-live {
+            background: rgba(255,255,255,0.2);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            background: #facc15;
+        }
+
+        .container {
+            padding: 14px;
+            max-width: 520px;
+            margin: 0 auto;
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* کارت‌ها */
+        .card {
+            background: var(--card);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 14px;
+            box-shadow: 0 2px 10px rgba(15, 23, 42, 0.05);
+        }
+        .card-title {
+            font-size: 0.95rem;
+            font-weight: 800;
+            margin-bottom: 12px;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* کادر گرافیکی پلاک خودرو ایران */
+        .iran-plate {
+            display: flex;
+            flex-direction: row-reverse;
+            align-items: center;
+            justify-content: space-between;
+            background: #fff;
+            border: 3px solid #111;
+            border-radius: 8px;
+            height: 64px;
+            overflow: hidden;
+            margin: 12px 0;
+            direction: ltr;
+            box-shadow: inset 0 0 4px rgba(0,0,0,0.1);
+        }
+        .plate-blue {
+            background: #003399;
+            color: white;
+            width: 34px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: center;
+            padding-bottom: 5px;
+            font-size: 8px;
+            font-weight: bold;
+            line-height: 1.1;
+        }
+        .plate-main {
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            flex: 1;
+            padding: 0 6px;
+            gap: 4px;
+        }
+        .plate-input {
+            width: 52px;
+            height: 44px;
+            font-size: 1.35rem;
+            font-weight: 800;
+            text-align: center;
+            border: 1px dashed #cbd5e1;
+            border-radius: 6px;
+            background: #f8fafc;
+            color: #0f172a;
+        }
+        .plate-input.three-digit { width: 72px; }
+        .plate-select {
+            height: 44px;
+            font-size: 1.15rem;
+            font-weight: 800;
+            border: 1px dashed #cbd5e1;
+            border-radius: 6px;
+            background: #fef08a;
+            padding: 0 4px;
+            color: #0f172a;
+        }
+        .plate-iran-box {
+            border-left: 2px solid #111;
+            height: 100%;
+            width: 64px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2px;
+        }
+        .plate-iran-box span { font-size: 10px; font-weight: bold; }
+
+        /* دکمه‌ها و فرم‌ها */
+        .btn {
+            width: 100%;
+            padding: 13px;
+            border: none;
+            border-radius: 12px;
+            font-size: 0.92rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: transform 0.1s, opacity 0.2s;
+        }
+        .btn:active { transform: scale(0.98); opacity: 0.85; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-warning { background: var(--warning); color: white; }
+        .btn-sheets {
+            background: linear-gradient(135deg, #0f9d58, #16a34a);
+            color: white;
+            box-shadow: 0 4px 12px rgba(22, 163, 74, 0.25);
+        }
+        .btn-outline {
+            background: #eff6ff;
+            color: var(--primary);
+            border: 1px solid #bfdbfe;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .form-control {
+            width: 100%;
+            padding: 11px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            font-size: 0.92rem;
+            margin-bottom: 10px;
+            background: #fff;
+        }
+
+        .car-preview {
+            width: 100%;
+            max-height: 185px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-top: 10px;
+            display: none;
+            border: 1px solid #e2e8f0;
+        }
+
+        /* فاکتور خروج */
+        .invoice-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px dashed #e2e8f0;
+            font-size: 0.88rem;
+        }
+        .invoice-total {
+            background: #f0fdf4;
+            border: 2px solid #86efac;
+            color: #166534;
+            padding: 12px;
+            border-radius: 12px;
+            text-align: center;
+            font-size: 1.3rem;
+            font-weight: 800;
+            margin: 12px 0;
+        }
+        .pos-status {
+            background: #eff6ff;
+            border: 1px solid #93c5fd;
+            color: #1e40af;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            text-align: center;
+            margin-bottom: 10px;
+            display: none;
+        }
+
+        /* ==================== استایل‌های ویژه پنل مالی پیشرفته ==================== */
+        .period-pills {
+            display: flex;
+            gap: 6px;
+            overflow-x: auto;
+            padding-bottom: 6px;
+            margin-bottom: 12px;
+            scrollbar-width: none;
+        }
+        .period-pills::-webkit-scrollbar { display: none; }
+        .period-pill {
+            padding: 7px 13px;
+            border-radius: 20px;
+            background: #e2e8f0;
+            color: #475569;
+            font-size: 0.8rem;
+            font-weight: 700;
+            border: none;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+        .period-pill.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
+        }
+
+        .hero-finance-card {
+            background: linear-gradient(135deg, #0f172a, #1e3a8a);
+            color: white;
+            border-radius: 16px;
+            padding: 18px;
+            margin-bottom: 14px;
+            box-shadow: 0 6px 18px rgba(15, 23, 42, 0.18);
+        }
+        .hero-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.82rem;
+            color: #93c5fd;
+        }
+        .hero-profit {
+            font-size: 1.65rem;
+            font-weight: 900;
+            margin: 8px 0 14px 0;
+            letter-spacing: -0.5px;
+        }
+        .hero-sub-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.09);
+            padding: 10px 12px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+        }
+        .hero-sub-item span {
+            display: block;
+            color: #cbd5e1;
+            font-size: 0.73rem;
+            margin-bottom: 3px;
+        }
+        .hero-sub-item strong {
+            font-size: 0.92rem;
+            color: #fff;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+        .stat-box {
+            background: #f8fafc;
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+        }
+        .stat-label {
+            font-size: 0.76rem;
+            color: var(--muted);
+            display: flex;
+            justify-content: space-between;
+        }
+        .stat-value {
+            font-size: 1.05rem;
+            font-weight: 800;
+            margin-top: 5px;
+        }
+        .stat-sub {
+            font-size: 0.7rem;
+            color: var(--muted);
+            margin-top: 3px;
+        }
+
+        /* چیپ‌های مبلغ سریع */
+        .quick-amounts {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+        .chip-btn {
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            color: #334155;
+            padding: 5px 10px;
+            border-radius: 16px;
+            font-size: 0.76rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .chip-btn:active { background: #e2e8f0; }
+
+        /* نمودار میله‌ای هزینه‌ها */
+        .progress-item { margin-bottom: 10px; }
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            margin-bottom: 4px;
+        }
+        .progress-bar-bg {
+            width: 100%;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #f59e0b, #ef4444);
+            border-radius: 8px;
+        }
+
+        .del-btn {
+            background: #fee2e2;
+            color: #dc2626;
+            border: none;
+            border-radius: 6px;
+            padding: 3px 7px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            margin-right: 6px;
+        }
+
+        /* منوی پایین صفحه */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            right: 0;
+            left: 0;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.08);
+            z-index: 100;
+        }
+        .nav-item {
+            border: none;
+            background: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 0.75rem;
+            color: var(--muted);
+            cursor: pointer;
+            gap: 3px;
+            flex: 1;
+        }
+        .nav-item.active {
+            color: var(--primary);
+            font-weight: 800;
+        }
+        .nav-icon { font-size: 1.3rem; }
+    </style>
+</head>
+<body>
+
+    <!-- هدر بالا -->
+    <div class="header">
+        <h1>🅿️ سامانه مدیریت پارکینگ</h1>
+        <div class="header-badges">
+            <span class="badge-live">
+                <span class="status-dot" id="serverStatusDot"></span>
+                <span id="headerActiveCount">در حال اتصال...</span>
+            </span>
+        </div>
+    </div>
+
+    <div class="container">
+
+        <!-- ==================== تب ۱: ثبت ورود خودرو ==================== -->
+        <div id="tab-entry" class="tab-content active">
+            <div class="card">
+                <div class="card-title">
+                    <span>📸 ۱. عکاسی و تشخیص پلاک</span>
+                    <span id="entryTimeClock" style="font-size:0.8rem; color:var(--muted);"></span>
+                </div>
+                
+                <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display: none;" onchange="handlePhotoUpload(event)">
+                <button class="btn btn-outline" onclick="document.getElementById('cameraInput').click()">
+                    📷 گرفتن عکس از پلاک خودرو
+                </button>
+                
+                <div id="ocrStatus" style="font-size: 0.85rem; color: var(--primary); margin-top: 10px; text-align:center; display: none;">
+                    ⏳ در حال خواندن پلاک با هوش مصنوعی...
+                </div>
+                <img id="entryPhotoPreview" class="car-preview" alt="پیش‌نمایش خودرو">
+
+                <!-- کادر گرافیکی پلاک ایران -->
+                <div class="iran-plate">
+                    <div class="plate-blue">
+                        <span>I.R.</span>
+                        <span>IRAN</span>
+                    </div>
+                    <div class="plate-main">
+                        <input type="tel" id="plateP1" class="plate-input" maxlength="2" placeholder="12">
+                        <select id="plateLetter" class="plate-select">
+                            <option value="ب">ب</option><option value="ج">ج</option><option value="د">د</option>
+                            <option value="س">س</option><option value="ص">ص</option><option value="ط">ط</option>
+                            <option value="ق">ق</option><option value="ل">ل</option><option value="م">م</option>
+                            <option value="ن">ن</option><option value="و">و</option><option value="هـ">هـ</option>
+                            <option value="ی">ی</option><option value="الف">الف</option><option value="ع">ع</option>
+                            <option value="ت">ت</option><option value="پ">پ</option><option value="ش">ش</option>
+                        </select>
+                        <input type="tel" id="plateP2" class="plate-input three-digit" maxlength="3" placeholder="345">
+                    </div>
+                    <div class="plate-iran-box">
+                        <span>ایران</span>
+                        <input type="tel" id="plateIran" class="plate-input" style="width: 48px; height: 34px; font-size: 1.1rem;" maxlength="2" placeholder="67">
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">🎫 ۲. اسکن کارت بارکد و ثبت ورود</div>
+                <button class="btn btn-primary" onclick="scanQrCode('entry')">
+                    🔍 اسکن بارکد کارت با دوربین تلگرام
+                </button>
+                <div class="input-group">
+                    <input type="text" id="entryCardCode" class="form-control" placeholder="کد کارت (مثلاً P-1001)" style="margin-bottom:0;">
+                </div>
+                <button class="btn btn-success" style="margin-top: 12px;" onclick="submitEntry()">
+                    ✅ ثبت ورود و تحویل کارت به مشتری
+                </button>
+            </div>
+        </div>
+
+        <!-- ==================== تب ۲: ترخیص و خروج خودرو ==================== -->
+        <div id="tab-exit" class="tab-content">
+            <div class="card">
+                <div class="card-title">🏁 اسکن بارکد مشتری جهت خروج</div>
+                <button class="btn btn-primary" onclick="scanQrCode('exit')">
+                    📷 باز کردن اسکنر بارکد تلگرام
+                </button>
+                <div class="input-group">
+                    <input type="text" id="exitCardCode" class="form-control" placeholder="یا کد کارت را وارد کنید (مثلاً P-1001)" style="margin-bottom:0;">
+                    <button class="btn btn-outline" style="width: 110px;" onclick="previewExitByCode()">استعلام</button>
+                </div>
+            </div>
+
+            <!-- کارت صورتحساب و اتصال به پوز -->
+            <div class="card" id="exitInvoiceCard" style="display: none;">
+                <div class="card-title">🧾 صورتحساب ترخیص خودرو</div>
+                <img id="exitCarPhoto" class="car-preview" style="display:none; margin-bottom: 12px;" alt="عکس لحظه ورود">
+                
+                <div class="invoice-row"><span>شماره پلاک:</span><strong id="invPlate">-</strong></div>
+                <div class="invoice-row"><span>کد کارت بارکد:</span><strong id="invCard">-</strong></div>
+                <div class="invoice-row"><span>زمان ورود:</span><strong id="invEntryTime" dir="ltr">-</strong></div>
+                <div class="invoice-row"><span>زمان خروج:</span><strong id="invExitTime" dir="ltr">-</strong></div>
+                <div class="invoice-row"><span>مدت زمان توقف:</span><strong id="invDuration">-</strong></div>
+                <div class="invoice-row"><span>پله تعرفه:</span><strong id="invTier">-</strong></div>
+
+                <div class="invoice-total">
+                    <div id="invFee">۰ تومان</div>
+                    <div id="invFeeRial" style="font-size: 0.8rem; font-weight: 500; color: #15803d; margin-top: 2px;">معادل ۰ ریال</div>
+                </div>
+
+                <div id="posStatusBox" class="pos-status"></div>
+
+                <button class="btn btn-primary" onclick="sendToPosTerminal()" style="margin-bottom: 8px;">
+                    💳 ارسال به کارتخوان (POS) و ثبت خروج
+                </button>
+                <button class="btn btn-success" onclick="confirmCarExit('نقدی')">
+                    💵 دریافت نقدی (ثبت در صندوق نقدی)
+                </button>
+            </div>
+        </div>
+
+        <!-- ==================== تب ۳: خودروهای حاضر در پارکینگ ==================== -->
+        <div id="tab-active" class="tab-content">
+            <div class="card">
+                <div class="card-title">🚗 خودروهای حاضر در پارکینگ</div>
+                <input type="text" id="searchPlateInput" class="form-control" placeholder="جستجوی شماره پلاک (مخصوص گم شدن کارت)..." oninput="loadActiveCars()">
+                <div id="activeCarsList"></div>
+            </div>
+        </div>
+
+        <!-- ==================== تب ۴: پنل مدیریت و حسابداری پیشرفته ==================== -->
+        <div id="tab-admin" class="tab-content">
+
+            <!-- فیلترهای بازه زمانی -->
+            <div class="period-pills">
+                <button class="period-pill active" onclick="changeReportPeriod('today', this)">📅 امروز</button>
+                <button class="period-pill" onclick="changeReportPeriod('yesterday', this)">⏮ دیروز</button>
+                <button class="period-pill" onclick="changeReportPeriod('week', this)">📆 ۷ روز اخیر</button>
+                <button class="period-pill" onclick="changeReportPeriod('month', this)">🗓 ۳۰ روز اخیر</button>
+                <button class="period-pill" onclick="changeReportPeriod('all', this)">♾ کل دوره</button>
+            </div>
+
+            <!-- کارت ویژه سود خالص و موجودی صندوق -->
+            <div class="hero-finance-card">
+                <div class="hero-top">
+                    <span>💎 سود خالص (درآمد منهای هزینه‌ها)</span>
+                    <span id="repMarginBadge" style="background:rgba(255,255,255,0.18); padding:2px 8px; border-radius:12px; color:#fff;">حاشیه سود: ۰٪</span>
+                </div>
+                <div class="hero-profit" id="repProfit">۰ تومان</div>
+                <div class="hero-sub-grid">
+                    <div class="hero-sub-item">
+                        <span>💳 واریزی کارتخوان (بانک)</span>
+                        <strong id="repPosIncome">۰ ت</strong>
+                    </div>
+                    <div class="hero-sub-item">
+                        <span>💵 موجودی نقدی صندوق (دخل)</span>
+                        <strong id="repCashDrawer">۰ ت</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ۴ شاخص کلیدی عملکرد پارکینگ -->
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="stat-label"><span>📈 کل درآمد</span><span>✅</span></div>
+                    <div class="stat-value" style="color:var(--success);" id="repIncome">۰ ت</div>
+                    <div class="stat-sub" id="repCompletedCount">از ۰ خودروی ترخیص‌شده</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label"><span>📉 کل هزینه‌ها</span><span>🧾</span></div>
+                    <div class="stat-value" style="color:var(--danger);" id="repExpense">۰ ت</div>
+                    <div class="stat-sub" id="repExpenseCount">۰ مورد ثبت‌شده</div>
+                </div>
+                <div class="stat-box" style="background:#f5f3ff; border-color:#ddd6fe;">
+                    <div class="stat-label"><span>⏳ کارکرد حاضرین</span><span>🚗</span></div>
+                    <div class="stat-value" style="color:var(--purple);" id="repPendingIncome">۰ ت</div>
+                    <div class="stat-sub" id="repPendingSub">درآمد در انتظار وصول</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label"><span>⏱ میانگین توقف</span><span>📊</span></div>
+                    <div class="stat-value" style="color:var(--primary);" id="repAvgDuration">۰ دقیقه</div>
+                    <div class="stat-sub" id="repAvgTicket">میانگین قبض: ۰ ت</div>
+                </div>
+            </div>
+
+            <!-- همگام‌سازی ابری با گوگل شیت -->
+            <div class="card">
+                <div class="card-title">
+                    <span>☁️ همگام‌سازی ابری با Google Sheets</span>
+                    <span id="sheetSyncTime" style="font-size:0.75rem; color:var(--muted);">آماده ارسال</span>
+                </div>
+                <button class="btn btn-sheets" id="btnSyncSheets" onclick="syncWithGoogleSheets()">
+                    📤 بارگذاری و بروزرسانی در گوگل شیت
+                </button>
+                <button class="btn btn-outline" id="btnOpenSheet" style="margin-top:8px; display:none;" onclick="openGoogleSheet()">
+                    🔗 باز کردن مستقیم جدول گوگل شیت
+                </button>
+            </div>
+
+            <!-- ثبت هزینه‌های جانبی -->
+            <div class="card">
+                <div class="card-title">🍔 ثبت سریع هزینه‌های مجموعه</div>
+                <select id="expCategory" class="form-control">
+                    <option value="وعده غذایی">🍔 وعده غذایی (صبحانه / ناهار / شام)</option>
+                    <option value="تعمیرات و نگهداری">🔧 تعمیرات و نگهداری تجهیزات</option>
+                    <option value="قبوض و شارژ">💡 قبوض و شارژ مصرفی</option>
+                    <option value="خرید ملزومات">🛒 خرید ملزومات پارکینگ</option>
+                    <option value="سایر هزینه‌ها">📝 سایر هزینه‌ها</option>
+                </select>
+
+                <div class="quick-amounts">
+                    <button type="button" class="chip-btn" onclick="addQuickExpense(50000)">+ ۵۰ هزار</button>
+                    <button type="button" class="chip-btn" onclick="addQuickExpense(100000)">+ ۱۰۰ هزار</button>
+                    <button type="button" class="chip-btn" onclick="addQuickExpense(200000)">+ ۲۰۰ هزار</button>
+                    <button type="button" class="chip-btn" onclick="addQuickExpense(500000)">+ ۵۰۰ هزار</button>
+                    <button type="button" class="chip-btn" style="color:var(--danger);" onclick="document.getElementById('expAmount').value=''">پاک کردن</button>
+                </div>
+
+                <input type="number" id="expAmount" class="form-control" placeholder="مبلغ هزینه به تومان (مثلاً 250000)">
+                <input type="text" id="expDesc" class="form-control" placeholder="توضیحات (مثلاً: ناهار شیفت ظهر)">
+                <button class="btn btn-warning" onclick="submitExpense()">
+                    ➕ ثبت هزینه و کسر از صندوق
+                </button>
+            </div>
+
+            <!-- تفکیک گرافیکی هزینه‌ها -->
+            <div class="card">
+                <div class="card-title">📊 تفکیک هزینه‌ها بر اساس دسته‌بندی</div>
+                <div id="expenseBreakdownBox" style="font-size:0.85rem;"></div>
+            </div>
+
+            <!-- لیست آخرین هزینه‌ها با قابلیت حذف -->
+            <div class="card">
+                <div class="card-title">📋 ریز هزینه‌های ثبت‌شده اخیر</div>
+                <div id="recentExpensesList" style="font-size: 0.85rem;"></div>
+            </div>
+
+            <!-- لیست آخرین ترخیص‌ها -->
+            <div class="card">
+                <div class="card-title">🏁 آخرین خودروهای ترخیص‌شده</div>
+                <div id="recentExitsList" style="font-size: 0.85rem;"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- منوی پایین مینی‌اپ -->
+    <div class="bottom-nav">
+        <button class="nav-item active" onclick="switchTab('entry', this)">
+            <span class="nav-icon">➕</span><span>ثبت ورود</span>
+        </button>
+        <button class="nav-item" onclick="switchTab('exit', this)">
+            <span class="nav-icon">🏁</span><span>ترخیص</span>
+        </button>
+        <button class="nav-item" onclick="switchTab('active', this)">
+            <span class="nav-icon">🚗</span><span>حاضرین</span>
+        </button>
+        <button class="nav-item" onclick="switchTab('admin', this)">
+            <span class="nav-icon">📊</span><span>مدیریت و مالی</span>
+        </button>
+    </div>
+
+    <script>
+        // =========================================================================
+        // 🔴 آدرس سرور شما (ngrok یا سرور مجازی)
+        // =========================================================================
+        const SERVER_URL = "https://grew-perceive-cattle.ngrok-free.dev";
+
+        const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+        if (tg) {
+            tg.ready();
+            tg.expand();
+        }
+
+        let currentUploadedPhotoPath = "";
+        let currentExitSessionId = null;
+        let currentExitFee = 0;
+        let currentReportMode = "today";
+        let googleSheetViewUrl = "";
+
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('entryTimeClock').innerText = now.toLocaleTimeString('fa-IR');
+        }, 1000);
+
+        async function apiFetch(endpoint, options = {}) {
+            const cleanBase = SERVER_URL.replace(/\/$/, '');
+            const headers = options.headers || {};
+            headers['ngrok-skip-browser-warning'] = 'true';
+            options.headers = headers;
+            return fetch(`${cleanBase}${endpoint}`, options);
+        }
+
+        function switchTab(tabName, btnElement) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            document.getElementById('tab-' + tabName).classList.add('active');
+            if (btnElement) btnElement.classList.add('active');
+
+            if (tabName === 'active') loadActiveCars();
+            if (tabName === 'admin') loadFinancialReport();
+        }
+
+        function compressImageToBlob(file, maxWidth = 900, quality = 0.75) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = event => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let w = img.width, h = img.height;
+                        if (w > maxWidth) { h = Math.round((h * maxWidth) / w); w = maxWidth; }
+                        canvas.width = w; canvas.height = h;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, w, h);
+                        canvas.toBlob(blob => resolve(blob), 'image/jpeg', quality);
+                    };
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function handlePhotoUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const preview = document.getElementById('entryPhotoPreview');
+            preview.src = URL.createObjectURL(file);
+            preview.style.display = 'block';
+
+            const ocrStatus = document.getElementById('ocrStatus');
+            ocrStatus.style.display = 'block';
+
+            try {
+                const compressedBlob = await compressImageToBlob(file);
+                const formData = new FormData();
+                formData.append('photo', compressedBlob, 'plate.jpg');
+
+                const res = await apiFetch('/api/ocr-plate', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                ocrStatus.style.display = 'none';
+
+                if (data.success) {
+                    currentUploadedPhotoPath = data.photo_path || "";
+                    if (data.plate_parts) {
+                        document.getElementById('plateP1').value = data.plate_parts.p1 || '';
+                        document.getElementById('plateLetter').value = data.plate_parts.letter || 'ب';
+                        document.getElementById('plateP2').value = data.plate_parts.p2 || '';
+                        document.getElementById('plateIran').value = data.plate_parts.iran || '';
+                    }
+                }
+            } catch (err) {
+                ocrStatus.style.display = 'none';
+                alert("❌ خطا در ارتباط با سرور پایتون!");
+            }
+        }
+
+        function scanQrCode(mode) {
+            if (tg && tg.showScanQrPopup) {
+                tg.showScanQrPopup({ text: "کارت بارکد پارکینگ را مقابل دوربین بگیرید" }, function(qrText) {
+                    tg.closeScanQrPopup();
+                    const code = qrText.trim().toUpperCase();
+                    if (mode === 'entry') {
+                        document.getElementById('entryCardCode').value = code;
+                    } else {
+                        document.getElementById('exitCardCode').value = code;
+                        previewExitByCode();
+                    }
+                    return true;
+                });
+            } else {
+                const manual = prompt("کد کارت بارکد را وارد کنید:", "P-1001");
+                if (manual) {
+                    const code = manual.trim().toUpperCase();
+                    if (mode === 'entry') document.getElementById('entryCardCode').value = code;
+                    else {
+                        document.getElementById('exitCardCode').value = code;
+                        previewExitByCode();
+                    }
+                }
+            }
+        }
+
+        async function submitEntry() {
+            const p1 = document.getElementById('plateP1').value.trim();
+            const letter = document.getElementById('plateLetter').value;
+            const p2 = document.getElementById('plateP2').value.trim();
+            const iran = document.getElementById('plateIran').value.trim();
+            const cardCode = document.getElementById('entryCardCode').value.trim().toUpperCase();
+
+            if (!p1 || !p2 || !iran) return alert("لطفاً تمام بخش‌های پلاک خودرو را وارد کنید.");
+            if (!cardCode) return alert("لطفاً بارکد کارت پارکینگ را اسکن یا وارد کنید.");
+
+            const fullPlate = `${p1} ${letter} ${p2} - ایران ${iran}`;
+
+            try {
+                const res = await apiFetch('/api/entry', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        plate_number: fullPlate,
+                        card_code: cardCode,
+                        photo_path: currentUploadedPhotoPath
+                    })
+                });
+                const data = await res.json();
+                if (!res.ok) return alert("❌ خطا: " + (data.detail || "مشکلی در ثبت ورود پیش آمد"));
+
+                alert(`✅ ورود خودرو «${fullPlate}» روی کارت «${cardCode}» ثبت شد.`);
+                document.getElementById('plateP1').value = '';
+                document.getElementById('plateP2').value = '';
+                document.getElementById('plateIran').value = '';
+                document.getElementById('entryCardCode').value = '';
+                document.getElementById('entryPhotoPreview').style.display = 'none';
+                currentUploadedPhotoPath = "";
+                updateHeaderCount();
+            } catch (err) {
+                alert("❌ عدم ارتباط با سرور پایتون!");
+            }
+        }
+
+        async function previewExitByCode(sessionId = null) {
+            document.getElementById('posStatusBox').style.display = 'none';
+            let url = '/api/exit/preview?';
+            if (sessionId) {
+                url += `session_id=${sessionId}`;
+            } else {
+                const code = document.getElementById('exitCardCode').value.trim().toUpperCase();
+                if (!code) return alert("لطفاً بارکد کارت را اسکن یا وارد کنید.");
+                url += `card_code=${encodeURIComponent(code)}`;
+            }
+
+            try {
+                const res = await apiFetch(url);
+                const data = await res.json();
+                if (!res.ok) {
+                    document.getElementById('exitInvoiceCard').style.display = 'none';
+                    return alert("❌ " + (data.detail || "خطا در استعلام"));
+                }
+
+                currentExitSessionId = data.session_id;
+                currentExitFee = data.fee;
+
+                document.getElementById('invPlate').innerText = data.plate_number;
+                document.getElementById('invCard').innerText = data.card_code;
+                document.getElementById('invEntryTime').innerText = data.entry_time;
+                document.getElementById('invExitTime').innerText = data.exit_time;
+                document.getElementById('invDuration').innerText = data.duration_text;
+                document.getElementById('invTier').innerText = data.tier_description;
+                document.getElementById('invFee').innerText = data.fee_formatted;
+                document.getElementById('invFeeRial').innerText = `معادل ${(data.fee * 10).toLocaleString()} ریال (جهت ارسال به کارتخوان)`;
+
+                const photoEl = document.getElementById('exitCarPhoto');
+                if (data.photo_path) {
+                    try {
+                        const imgRes = await apiFetch(data.photo_path);
+                        if (imgRes.ok) {
+                            const imgBlob = await imgRes.blob();
+                            photoEl.src = URL.createObjectURL(imgBlob);
+                            photoEl.style.display = 'block';
+                        } else {
+                            photoEl.style.display = 'none';
+                        }
+                    } catch (e) {
+                        photoEl.style.display = 'none';
+                    }
+                } else {
+                    photoEl.style.display = 'none';
+                }
+
+                document.getElementById('exitInvoiceCard').style.display = 'block';
+            } catch (err) {
+                alert("❌ عدم ارتباط با سرور پایتون!");
+            }
+        }
+
+        async function sendToPosTerminal() {
+            if (!currentExitSessionId) return;
+            const amountRials = currentExitFee * 10;
+            const statusBox = document.getElementById('posStatusBox');
+            statusBox.style.display = 'block';
+            statusBox.innerHTML = `⏳ در حال ارسال مبلغ <strong>${amountRials.toLocaleString()} ریال</strong> به دستگاه کارتخوان...`;
+
+            try {
+                const res = await apiFetch('/api/pos/pay', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ session_id: currentExitSessionId, amount_rial: amountRials })
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    statusBox.innerHTML = `✅ دستور به کارتخوان ارسال شد.`;
+                    if (confirm(`مبلغ ${amountRials.toLocaleString()} ریال به کارتخوان ارسال شد.\nآیا تراکنش انجام شد؟`)) {
+                        await confirmCarExit('کارتخوان');
+                    }
+                }
+            } catch (e) {
+                statusBox.innerHTML = `⚠️ خطا در ارتباط با کارتخوان.`;
+            }
+        }
+
+        async function confirmCarExit(paymentMethod = 'کارتخوان') {
+            if (!currentExitSessionId) return;
+            try {
+                const res = await apiFetch('/api/exit/confirm', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        session_id: currentExitSessionId,
+                        payment_method: paymentMethod
+                    })
+                });
+                const data = await res.json();
+                if (!res.ok) return alert("❌ " + data.detail);
+
+                alert(`✅ خروج خودرو با پرداخت «${paymentMethod}» ثبت شد.\nمبلغ: ${data.fee.toLocaleString()} تومان`);
+                document.getElementById('exitInvoiceCard').style.display = 'none';
+                document.getElementById('exitCardCode').value = '';
+                currentExitSessionId = null;
+                updateHeaderCount();
+            } catch (err) {
+                alert("❌ عدم ارتباط با سرور پایتون!");
+            }
+        }
+
+        async function loadActiveCars() {
+            const q = document.getElementById('searchPlateInput').value.trim();
+            try {
+                const res = await apiFetch(`/api/active-cars?search=${encodeURIComponent(q)}`);
+                const data = await res.json();
+                document.getElementById('headerActiveCount').innerText = `حاضر: ${data.cars.length} خودرو`;
+                document.getElementById('serverStatusDot').style.background = '#4ade80';
+
+                const container = document.getElementById('activeCarsList');
+                if (data.cars.length === 0) {
+                    container.innerHTML = `<p style="text-align:center; color:var(--muted); padding:15px;">هیچ خودرویی در پارکینگ نیست.</p>`;
+                    return;
+                }
+
+                container.innerHTML = data.cars.map(c => `
+                    <div style="border:1px solid #e2e8f0; border-radius:10px; padding:10px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <div style="font-weight:800; font-size:0.95rem;">${c.plate_number}</div>
+                            <div style="font-size:0.8rem; color:var(--muted);">کارت: ${c.card_code} | ورود: ${c.entry_time.slice(11,16)}</div>
+                        </div>
+                        <button class="btn btn-outline" style="width:auto; padding:6px 12px; font-size:0.8rem;" onclick="checkoutFromList(${c.id})">
+                            صدور قبض خروج
+                        </button>
+                    </div>
+                `).join('');
+            } catch (err) {
+                document.getElementById('serverStatusDot').style.background = '#ef4444';
+            }
+        }
+
+        function checkoutFromList(sessionId) {
+            switchTab('exit', document.querySelectorAll('.nav-item')[1]);
+            previewExitByCode(sessionId);
+        }
+
+        // ==================== توابع بخش مدیریت مالی پیشرفته ====================
+        function changeReportPeriod(mode, btn) {
+            currentReportMode = mode;
+            document.querySelectorAll('.period-pill').forEach(el => el.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+            loadFinancialReport();
+        }
+
+        function addQuickExpense(val) {
+            const input = document.getElementById('expAmount');
+            const current = parseInt(input.value) || 0;
+            input.value = current + val;
+        }
+
+        async function loadFinancialReport() {
+            try {
+                const res = await apiFetch(`/api/report?mode=${currentReportMode}`);
+                const data = await res.json();
+
+                document.getElementById('headerActiveCount').innerText = `حاضر: ${data.active_cars_count} خودرو`;
+                document.getElementById('serverStatusDot').style.background = '#4ade80';
+
+                // کارت اصلی سود خالص و صندوق
+                document.getElementById('repProfit').innerText = data.net_profit.toLocaleString() + ' تومان';
+                document.getElementById('repMarginBadge').innerText = `حاشیه سود: ${data.profit_margin}%`;
+                document.getElementById('repPosIncome').innerText = (data.pos_income || 0).toLocaleString() + ' ت';
+                document.getElementById('repCashDrawer').innerText = (data.cash_in_drawer || 0).toLocaleString() + ' ت';
+
+                // ۴ باکس آماری
+                document.getElementById('repIncome').innerText = data.total_income.toLocaleString() + ' ت';
+                document.getElementById('repCompletedCount').innerText = `از ${data.completed_cars_count || 0} خودروی ترخیص‌شده`;
+                document.getElementById('repExpense').innerText = data.total_expense.toLocaleString() + ' ت';
+                document.getElementById('repExpenseCount').innerText = `${data.expense_count || 0} فاکتور هزینه`;
+                document.getElementById('repPendingIncome').innerText = (data.pending_income || 0).toLocaleString() + ' ت';
+                document.getElementById('repPendingSub').innerText = `از ${data.active_cars_count} خودروی داخل پارکینگ`;
+                document.getElementById('repAvgDuration').innerText = `${data.avg_duration || 0} دقیقه`;
+                document.getElementById('repAvgTicket').innerText = `میانگین قبض: ${(data.avg_ticket || 0).toLocaleString()} ت`;
+
+                if (data.google_sheet_url) {
+                    googleSheetViewUrl = data.google_sheet_url;
+                    document.getElementById('btnOpenSheet').style.display = 'flex';
+                }
+
+                // نمودار تفکیک هزینه‌ها
+                const breakdownBox = document.getElementById('expenseBreakdownBox');
+                if (!data.expense_breakdown || data.expense_breakdown.length === 0) {
+                    breakdownBox.innerHTML = `<p style="color:var(--muted); text-align:center;">در این بازه هزینه‌ای ثبت نشده است.</p>`;
+                } else {
+                    breakdownBox.innerHTML = data.expense_breakdown.map(b => `
+                        <div class="progress-item">
+                            <div class="progress-header">
+                                <span><strong>${b.category}</strong> (${b.percent}%)</span>
+                                <span>${b.total.toLocaleString()} تومان</span>
+                            </div>
+                            <div class="progress-bar-bg">
+                                <div class="progress-bar-fill" style="width: ${b.percent}%;"></div>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+
+                // لیست آخرین هزینه‌ها + دکمه حذف
+                const expContainer = document.getElementById('recentExpensesList');
+                if (!data.recent_expenses || data.recent_expenses.length === 0) {
+                    expContainer.innerHTML = `<p style="color:var(--muted); text-align:center;">هزینه‌ای ثبت نشده است.</p>`;
+                } else {
+                    expContainer.innerHTML = data.recent_expenses.map(e => `
+                        <div class="invoice-row">
+                            <div>
+                                <strong>${e.category}</strong>
+                                <span style="color:var(--muted); font-size:0.78rem;"> (${e.description || 'بدون توضیح'})</span>
+                                <div style="font-size:0.7rem; color:var(--muted);" dir="ltr">${e.created_at.slice(0,16)}</div>
+                            </div>
+                            <div style="display:flex; align-items:center;">
+                                <span style="color:var(--danger); font-weight:700;">${e.amount.toLocaleString()} ت</span>
+                                <button class="del-btn" onclick="deleteExpenseItem(${e.id})" title="حذف هزینه">🗑</button>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+
+                // لیست آخرین خودروهای ترخیص‌شده
+                const exitsContainer = document.getElementById('recentExitsList');
+                if (!data.recent_exits || data.recent_exits.length === 0) {
+                    exitsContainer.innerHTML = `<p style="color:var(--muted); text-align:center;">ترخیصی در این بازه ثبت نشده است.</p>`;
+                } else {
+                    exitsContainer.innerHTML = data.recent_exits.map(x => `
+                        <div class="invoice-row">
+                            <div>
+                                <strong>${x.plate_number}</strong>
+                                <span style="font-size:0.75rem; background:#e2e8f0; padding:2px 6px; border-radius:6px; margin-right:4px;">${x.payment_method || 'کارتخوان'}</span>
+                                <div style="font-size:0.72rem; color:var(--muted);">مدت توقف: ${x.duration_minutes} دقیقه</div>
+                            </div>
+                            <span style="color:var(--success); font-weight:800;">${(x.fee || 0).toLocaleString()} ت</span>
+                        </div>
+                    `).join('');
+                }
+            } catch (err) {
+                document.getElementById('serverStatusDot').style.background = '#ef4444';
+            }
+        }
+
+        async function submitExpense() {
+            const category = document.getElementById('expCategory').value;
+            const amount = parseInt(document.getElementById('expAmount').value);
+            const description = document.getElementById('expDesc').value.trim();
+
+            if (!amount || amount <= 0) return alert("لطفاً مبلغ صحیح هزینه را وارد کنید.");
+
+            try {
+                const res = await apiFetch('/api/expenses', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ category, amount, description })
+                });
+                if (res.ok) {
+                    alert(`✅ هزینه «${category}» به مبلغ ${amount.toLocaleString()} تومان ثبت شد.`);
+                    document.getElementById('expAmount').value = '';
+                    document.getElementById('expDesc').value = '';
+                    loadFinancialReport();
+                }
+            } catch (err) {
+                alert("❌ عدم ارتباط با سرور پایتون!");
+            }
+        }
+
+        async function deleteExpenseItem(expenseId) {
+            if (!confirm("آیا از حذف این هزینه مطمئن هستید؟")) return;
+            try {
+                const res = await apiFetch(`/api/expenses/${expenseId}`, { method: 'DELETE' });
+                if (res.ok) loadFinancialReport();
+            } catch (e) {
+                alert("❌ خطا در حذف هزینه");
+            }
+        }
+
+        // ارسال و بارگذاری تمام اطلاعات در Google Sheets
+        async function syncWithGoogleSheets() {
+            const btn = document.getElementById('btnSyncSheets');
+            const syncLabel = document.getElementById('sheetSyncTime');
+            btn.disabled = true;
+            btn.innerText = "⏳ در حال بارگذاری اطلاعات روی Google Sheets...";
+
+            try {
+                const res = await apiFetch('/api/sync-google-sheet', { method: 'POST' });
+                const data = await res.json();
+                btn.disabled = false;
+                btn.innerText = "📤 بارگذاری و بروزرسانی در گوگل شیت";
+
+                if (!res.ok) {
+                    return alert("⚠️ " + (data.detail || "خطا در اتصال به گوگل شیت"));
+                }
+
+                const nowStr = new Date().toLocaleTimeString('fa-IR');
+                syncLabel.innerText = `آخرین بروزرسانی: ${nowStr}`;
+                if (data.sheet_url) {
+                    googleSheetViewUrl = data.sheet_url;
+                    document.getElementById('btnOpenSheet').style.display = 'flex';
+                }
+                alert(`✅ تمام ترددها، هزینه‌ها و خلاصه وضعیت مالی با موفقیت در Google Sheets بارگذاری شد!`);
+            } catch (e) {
+                btn.disabled = false;
+                btn.innerText = "📤 بارگذاری و بروزرسانی در گوگل شیت";
+                alert("❌ عدم ارتباط با سرور پایتون!");
+            }
+        }
+
+        function openGoogleSheet() {
+            if (googleSheetViewUrl) {
+                window.open(googleSheetViewUrl, '_blank');
+            }
+        }
+
+        async function updateHeaderCount() {
+            try {
+                const res = await apiFetch('/api/report?mode=today');
+                const data = await res.json();
+                document.getElementById('headerActiveCount').innerText = `حاضر: ${data.active_cars_count} خودرو`;
+                document.getElementById('serverStatusDot').style.background = '#4ade80';
+            } catch (e) {
+                document.getElementById('headerActiveCount').innerText = `قطع ارتباط با سرور`;
+                document.getElementById('serverStatusDot').style.background = '#ef4444';
+            }
+        }
+
+        updateHeaderCount();
+    </script>
+</body>
+</html>
